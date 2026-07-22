@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+
+# clasp / Apps Script identifiers
+.clasp.json
+
+# Local outputs
+dist/
+build/
+coverage/
+*.log
