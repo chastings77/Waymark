@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waymark — Cross Bar Applications</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Hastings Family Hunting Planner</p>
+        <h1>Waymark</h1>
+        <p class="subtitle">Select hunts, then apply one at a time.</p>
+      </div>
+      <button id="resetButton" class="text-button" type="button">Reset MVP</button>
+    </header>
+
+    <section id="selectionView">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-label">Cross Bar MVP</p>
+          <h2>Select applications</h2>
+          <p class="muted">All four V5 Cross Bar applications are selected by default.</p>
+        </div>
+        <label class="select-all"><input id="selectAll" type="checkbox" checked> Select all</label>
+      </div>
+
+      <div class="toolbar">
+        <label>Sort by
+          <select id="sortSelect">
+            <option value="applicant">Applicant</option>
+            <option value="species">Species</option>
+            <option value="deadline">Deadline</option>
+            <option value="status">Status</option>
+          </select>
+        </label>
+        <label>Show
+          <select id="statusFilter">
+            <option value="all">All statuses</option>
+            <option value="Not Started">Not started</option>
+            <option value="Applied">Applied</option>
+            <option value="Skipped">Skipped</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th aria-label="Select"></th><th>Applicant</th><th>Hunt</th><th>Deadline</th><th>Fee</th><th>Status</th></tr></thead>
+          <tbody id="huntRows"></tbody>
+        </table>
+      </div>
+
+      <div class="sticky-action">
+        <div><strong id="selectedCount">4 selected</strong><span id="selectedCost"> · $12 total fees</span></div>
+        <button id="startButton" class="primary-button" type="button">Start Applying</button>
+      </div>
+    </section>
+
+    <section id="wizardView" hidden>
+      <button id="backButton" class="text-button back-button" type="button">← Back to hunt list</button>
+      <section class="progress-card">
+        <div><p class="section-label">Application session</p><p id="wizardProgress">1 of 4</p></div>
+        <progress id="wizardProgressBar" value="1" max="4"></progress>
+      </section>
+
+      <article class="hunt-card">
+        <div class="hunt-card-header">
+          <div><p id="wizardApplicant" class="priority-badge"></p><h2 id="wizardTitle"></h2><p id="wizardSubtitle" class="hunt-subtitle"></p></div>
+          <p id="wizardDeadline" class="deadline"></p>
+        </div>
+        <dl class="hunt-details">
+          <div><dt>Applicant</dt><dd id="detailApplicant"></dd></div>
+          <div><dt>Application fee</dt><dd id="detailFee"></dd></div>
+          <div><dt>Current status</dt><dd id="detailStatus"></dd></div>
+        </dl>
+        <div class="notes-block"><h3>V5 notes</h3><p id="wizardNotes"></p></div>
+        <div class="link-row">
+          <a id="detailsLink" class="secondary-button" target="_blank" rel="noopener noreferrer">Find Cross Bar details</a>
+          <a id="applyLink" class="primary-button" target="_blank" rel="noopener noreferrer">Open TPWD hunt page</a>
+        </div>
+        <div class="completion-form">
+          <label>Confirmation number <span class="optional">(optional)</span>
+            <input id="confirmationInput" type="text" autocomplete="off" placeholder="Enter confirmation number">
+          </label>
+          <label>Application date
+            <input id="dateAppliedInput" type="date">
+          </label>
+        </div>
+        <div class="action-row wizard-actions">
+          <button id="previousButton" class="secondary-button" type="button">← Previous Hunt</button>
+          <div class="wizard-actions-right">
+            <button id="skipButton" class="secondary-button" type="button">Skip for now</button>
+            <button id="appliedButton" class="success-button" type="button">Save Applied & Next</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section id="completeView" class="empty-state" hidden>
+      <p class="success-mark">✓</p><h2>Application Session Complete</h2>
+      <p id="completeSummary"></p>
+      <div id="completeList" class="complete-list"></div>
+      <div class="link-row centered">
+        <button id="downloadCsvButton" class="secondary-button" type="button">Download Spreadsheet Updates</button>
+        <button id="returnButton" class="primary-button" type="button">Return to Hunt List</button>
+      </div>
+      <p class="small-note">This MVP saves in this browser. The downloaded CSV gives you the rows to copy into V5 until Google Sheets is connected.</p>
+    </section>
+  </main>
+  <script src="sample-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
