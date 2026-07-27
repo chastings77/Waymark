@@ -1,11 +1,17 @@
-# Waymark Cross Bar MVP
+# Waymark
 
-1. Open `src/client/index.html` in Chrome or Safari.
-2. Select one or more Cross Bar application rows.
-3. Click **Start Applying**.
-4. Use the official details and TPWD portal links.
-5. Enter the application date and optional confirmation number.
-6. Click **Save Applied & Next**.
-7. At completion, download the spreadsheet-update CSV.
+Waymark helps the Hastings family select public hunting applications, complete them one at a time, and record the results accurately.
 
-This version stores progress in the browser's localStorage. It does not yet write directly to Google Sheets.
+## Current stable sprint
+
+**Sprint 3: Google Sheets Integration**
+
+- Live Master Hunt List loading
+- Applicant-specific Casey and Jeremiah records
+- Search, filters, sorting, and multi-select
+- Guided application wizard
+- Previous Hunt navigation
+- Direct Google Sheets writes for Applied/Skipped status, application date, and confirmation number
+- Session summary and optional CSV report
+
+See `README-SPRINT-3.md` for deployment instructions.

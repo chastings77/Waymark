@@ -1,8 +1,9 @@
+<script>
 (() => {
 'use strict';
 
 const SESSION_KEY = 'waymark.application-session.v3';
-const state = { hunts: [], selected: new Set(), sessionIds: [], currentIndex: 0, sessionStarted: false, saving: false };
+const state = { hunts: [], selected: new Set(), sessionIds: [], currentIndex: 0, sessionStarted: false, saving: false, sessionResults: {} };
 const $ = id => document.getElementById(id);
 const el = {
   syncMessage: $('syncMessage'), selectionView: $('selectionView'), wizardView: $('wizardView'), completeView: $('completeView'),
@@ -66,7 +67,7 @@ async function loadFromSpreadsheet({ preserveSelection = false } = {}) {
 
 function saveSession() {
   if (state.sessionStarted && state.sessionIds.length) {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ sessionIds: state.sessionIds, currentIndex: state.currentIndex }));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ sessionIds: state.sessionIds, currentIndex: state.currentIndex, sessionResults: state.sessionResults }));
   }
 }
 
@@ -77,12 +78,13 @@ function loadSession() {
     state.sessionIds = saved.sessionIds.filter(id => state.hunts.some(h => h.huntId === id));
     if (!state.sessionIds.length) return false;
     state.currentIndex = Math.min(Math.max(Number(saved.currentIndex) || 0, 0), state.sessionIds.length - 1);
+    state.sessionResults = saved.sessionResults && typeof saved.sessionResults === 'object' ? saved.sessionResults : {};
     state.sessionStarted = true;
     return true;
   } catch { return false; }
 }
 
-function clearSession() { sessionStorage.removeItem(SESSION_KEY); state.sessionStarted = false; }
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); state.sessionStarted = false; state.sessionResults = {}; }
 function currentHunt() { return state.hunts.find(h => h.huntId === state.sessionIds[state.currentIndex]); }
 
 function filteredHunts() {
@@ -134,6 +136,7 @@ function startSession() {
   state.sessionIds = filteredHunts().filter(h => state.selected.has(h.huntId)).map(h => h.huntId);
   if (!state.sessionIds.length) return;
   state.currentIndex = 0;
+  state.sessionResults = {};
   state.sessionStarted = true;
   saveSession();
   show('wizard');
@@ -192,11 +195,27 @@ async function persistCurrent(status) {
   setSaving(true);
   setSaveMessage(`Saving ${hunt.applicant}'s ${hunt.huntArea} record to Google Sheets…`);
   try {
-    const updated = await callServer('saveApplication', payload);
+    const receipt = await callServer('saveApplication', payload);
+    if (!receipt || receipt.ok !== true || !receipt.hunt) {
+      throw new Error('Google Sheets did not return a confirmed save receipt.');
+    }
+    const updated = receipt.hunt;
+    if (updated.huntId !== payload.huntId || Number(updated.sourceRow) !== Number(payload.sourceRow) || updated.applicant !== payload.applicant || updated.applicationStatus !== status) {
+      throw new Error('The saved row did not match the application being processed.');
+    }
     const index = state.hunts.findIndex(item => item.huntId === updated.huntId);
-    if (index >= 0) state.hunts[index] = updated;
+    if (index < 0) throw new Error('The saved application could not be matched in the current session.');
+    state.hunts[index] = updated;
+    state.sessionResults[updated.huntId] = {
+      ok: true,
+      status: updated.applicationStatus,
+      savedAt: receipt.savedAt,
+      sourceRow: updated.sourceRow,
+      applicant: updated.applicant
+    };
     if (status === 'Applied') state.selected.delete(updated.huntId);
-    setSaveMessage('Saved to Google Sheets.', 'success');
+    saveSession();
+    setSaveMessage(`Confirmed in Google Sheets · row ${updated.sourceRow}.`, 'success');
     next();
   } catch (error) {
     setSaveMessage(`Not saved: ${error.message}`, 'error');
@@ -222,10 +241,19 @@ function next() {
 function finishSession() {
   show('complete');
   const session = state.sessionIds.map(id => state.hunts.find(h => h.huntId === id)).filter(Boolean);
+  const confirmed = session.filter(h => state.sessionResults[h.huntId]?.ok === true);
+  if (confirmed.length !== session.length) {
+    const firstUnconfirmedIndex = state.sessionIds.findIndex(id => !state.sessionResults[id]?.ok);
+    state.currentIndex = firstUnconfirmedIndex < 0 ? 0 : firstUnconfirmedIndex;
+    show('wizard');
+    renderWizard();
+    setSaveMessage('This session is not complete. This record still needs a confirmed Google Sheets save.', 'error');
+    return;
+  }
   const applied = session.filter(h => h.applicationStatus === 'Applied');
   const skipped = session.filter(h => h.applicationStatus === 'Skipped');
-  el.completeSummary.textContent = `${applied.length} applied${skipped.length ? ` · ${skipped.length} skipped` : ''} · ${session.length} total. Every status shown below is saved in Google Sheets.`;
-  el.completeList.innerHTML = session.map(h => `<div><strong>${escapeHtml(h.applicant)} — ${escapeHtml(h.huntArea)}</strong><span>${escapeHtml(h.speciesGroup)} · ${escapeHtml(h.applicationStatus)}${h.dateApplied ? ` · ${escapeHtml(dateText(h.dateApplied))}` : ''}</span></div>`).join('');
+  el.completeSummary.textContent = `${applied.length} applied${skipped.length ? ` · ${skipped.length} skipped` : ''} · ${session.length} total. All ${session.length} records were confirmed by Google Sheets.`;
+  el.completeList.innerHTML = session.map(h => `<div><strong>✓ ${escapeHtml(h.applicant)} — ${escapeHtml(h.huntArea)}</strong><span>${escapeHtml(h.speciesGroup)} · ${escapeHtml(h.applicationStatus)} · Sheet row ${escapeHtml(h.sourceRow)}${h.dateApplied ? ` · ${escapeHtml(dateText(h.dateApplied))}` : ''}</span></div>`).join('');
   clearSession();
 }
 
@@ -260,3 +288,4 @@ el.resetButton.addEventListener('click', () => loadFromSpreadsheet({ preserveSel
 
 loadFromSpreadsheet();
 })();
+</script>
