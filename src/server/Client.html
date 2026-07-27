@@ -200,7 +200,7 @@ async function persistCurrent(status) {
       throw new Error('Google Sheets did not return a confirmed save receipt.');
     }
     const updated = receipt.hunt;
-    if (updated.huntId !== payload.huntId || Number(updated.sourceRow) !== Number(payload.sourceRow) || updated.applicant !== payload.applicant || updated.applicationStatus !== status) {
+    if (updated.huntId !== payload.huntId || updated.applicant !== payload.applicant || updated.applicationStatus !== status) {
       throw new Error('The saved row did not match the application being processed.');
     }
     const index = state.hunts.findIndex(item => item.huntId === updated.huntId);

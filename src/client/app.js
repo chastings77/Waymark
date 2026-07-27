@@ -192,7 +192,8 @@ async function persistCurrent(status) {
   setSaving(true);
   setSaveMessage(`Saving ${hunt.applicant}'s ${hunt.huntArea} record to Google Sheets…`);
   try {
-    const updated = await callServer('saveApplication', payload);
+    const response = await callServer('saveApplication', payload);
+    const updated = response && response.hunt ? response.hunt : response;
     const index = state.hunts.findIndex(item => item.huntId === updated.huntId);
     if (index >= 0) state.hunts[index] = updated;
     if (status === 'Applied') state.selected.delete(updated.huntId);

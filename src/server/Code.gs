@@ -1,4 +1,4 @@
-/** Waymark Sprint 3 web application entry points. */
+/** Waymark Sprint 4 web application entry points. */
 function doGet() {
   return HtmlService.createTemplateFromFile('Index')
     .evaluate()
